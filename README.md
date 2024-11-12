@@ -1,2 +1,1 @@
-# kazkytw.github.io
-My Web
+# 我ㄉ網站 | My Website
