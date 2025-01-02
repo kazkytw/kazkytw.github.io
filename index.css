@@ -9,13 +9,58 @@ body {
   text-align: center;
 }
 
-/*個資卡片*/
+/* 標題 & 副標題 */
+.title {
+  color: #f2f2f2;
+  font-size: 27px;
+  font-family: "Noto Sans TC", sans-serif;
+}
+.subTitle {
+  color: #eed7c5;
+  font-size: 20px;
+  font-family: "Noto Sans TC", sans-serif;
+}
+.special-subTitle {
+  color: #fff200;
+  font-size: 20px;
+  font-family: "Noto Sans TC", sans-serif;
+}
+
+/* 連結 icon */
+.icon {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+.icon a {
+  color: #f2f2f2;
+  width: 80px;
+  font-size: 30px;
+  text-decoration: none;
+  transition: 0.3s linear;
+}
+.icon a:hover {
+  color: #e66767;
+}
+
+/* 卡片 */
 .profile {
   display: block;
 }
-.profile-card {
+/* 卡片樣式 */
+.profileL-card {
   display: inline-block;
-  margin: 100px;
+  margin: 100px 50px;
+  padding: 60px 40px;
+  width: 400px;
+  text-align: center;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2c3a47;
+}
+.profileR-card {
+  display: inline-block;
+  margin: 100px 50px;
   padding: 60px 40px;
   width: 400px;
   text-align: center;
@@ -23,7 +68,7 @@ body {
   overflow: hidden;
   background: #2b3035;
 }
-/*大頭貼*/
+/* 大頭貼 */
 .propic {
   display: inline-block;
   padding: 8px;
@@ -39,8 +84,7 @@ body {
   height: 200px;
   border-radius: 50%;
 }
-
-/*名字*/
+/* 名字 */
 .name {
   font-size: 50px;
   font-weight: 600;
@@ -49,34 +93,15 @@ body {
   font-family: "Kaushan Script";
   color: #f2f2f2;
 }
-
-/*簡介*/
+/* 簡介 */
 .introduction {
   font-size: 20px;
-  /*margin: 10px 0;*/
   letter-spacing: 2.5px;
   font-family: "Kaushan Script";
   color: #f2f2f2;
 }
 
-/*連結*/
-.profile-icon {
-  display: flex;
-  justify-content: center;
-  margin: 50px 0 0 0;
-}
-.profile-icon a {
-  color: #f2f2f2;
-  width: 80px;
-  font-size: 30px;
-  text-decoration: none;
-  transition: 0.3s linear;
-}
-.profile-icon a:hover {
-  color: #e66767;
-}
-
-/*作品集*/
+/*---------- 作品集 ----------*/
 .portfolio a {
   color: #f2f2f2;
   font-size: 40px;
@@ -87,8 +112,8 @@ body {
   width: 90%;
 }
 
-/*編曲試作集*/
-.MusicDemos {
+/*魚論*/
+.yuLun {
   display: inline-block;
   margin: 20px;
   padding: 40px;
@@ -99,29 +124,75 @@ body {
   overflow: hidden;
   background: #2c3a47;
 }
-.MusicDemos-title {
-  color: #f2f2f2;
-  font-size: 27px;
-  font-family: "Noto Sans TC", sans-serif;
+.yuLun img {
+  padding: 30px 0 20px;
+  width: 200px;
 }
-.MusicDemos img {
+
+/*盒勝*/
+.hoSeng {
+  display: inline-block;
+  margin: 20px;
+  padding: 40px;
+  height: 450px;
+  width: 450px;
+  text-align: center;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2c3a47;
+}
+.hoSeng img {
+  padding: 30px 0 80px;
+  width: 400px;
+}
+
+/*居家火災防災系統*/
+.fireIOT {
+  display: inline-block;
+  margin: 20px;
+  padding: 40px;
+  height: 450px;
+  width: 450px;
+  text-align: center;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2c3a47;
+}
+.fireIOT img {
   padding: 60px 0 80px;
   width: 400px;
 }
 
-/*連結*/
-.MusicDemos-icon {
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
+/* 實作物聯網系統 */
+.IOT {
+  display: inline-block;
+  margin: 20px;
+  padding: 40px;
+  height: 450px;
+  width: 450px;
+  text-align: center;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2c3a47;
 }
-.MusicDemos-icon a {
-  color: #f2f2f2;
-  width: 80px;
-  font-size: 30px;
-  text-decoration: none;
-  transition: 0.3s linear;
+.IOT img {
+  padding: 30px 0 80px;
+  width: 400px;
 }
-.MusicDemos-icon a:hover {
-  color: #e66767;
+
+/*潮畫線*/
+.DW {
+  display: inline-block;
+  margin: 20px;
+  padding: 40px;
+  height: 450px;
+  width: 450px;
+  text-align: center;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2c3a47;
+}
+.DW img {
+  padding: 50px 0px 70px;
+  width: 400px;
 }
