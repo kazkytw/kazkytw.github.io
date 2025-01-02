@@ -135,5 +135,5 @@ function closeNav() {
 }
 
 function MyWeb() {
-  window.open("https://kazkytw.github.io/portfolio/portfolio.html", "_blank");
+  window.open("https://kazkytw.github.io", "_blank");
 }
