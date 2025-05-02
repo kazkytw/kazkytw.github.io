@@ -144,7 +144,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 為每個按鈕添加點擊事件
   mainPageBtn.addEventListener("click", () => showPage(mainPage));
-  calendarBtn.addEventListener("click", () => showPage(calendar));
+  calendarBtn.addEventListener("click", () => {
+    showPage(calendar);
+
+    // 獲取今天的日期
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+
+    // 格式化為YYYY-MM-DD格式
+    const formattedToday = `${year}-${String(month + 1).padStart(
+      2,
+      "0"
+    )}-${String(day).padStart(2, "0")}`;
+
+    // 更新日記列表，顯示今天的日記
+    updateDiaryList(formattedToday);
+  });
 
   // 新增日記按鈕顯示日曆並打開日記輸入框
   addNewDiaryBtn.addEventListener("click", () => {
@@ -197,6 +214,15 @@ document.addEventListener("DOMContentLoaded", function () {
           moodPoints.forEach((p) => p.classList.remove("selected"));
           moodPoints[2].classList.add("selected");
           selectedMoodPoint = 3;
+
+          // 更新日曆顯示 - 重新生成當前月份的日曆
+          generateCalendar(today.getFullYear(), today.getMonth());
+
+          // 如果情感儀表板可見，也更新情感日曆
+          if (emotionPointDashboard.style.display === "block") {
+            generateMoodCalendar(today.getFullYear(), today.getMonth());
+            drawMoodChart();
+          }
         } else {
           alert("保存失敗，請重試！");
         }
@@ -305,6 +331,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDay = date.getDay(); // 獲取該月的第一天是星期幾
 
+    // 獲取今天的日期
+    const currentDate = new Date();
+    const isCurrentMonth =
+      currentDate.getFullYear() === year && currentDate.getMonth() === month;
+    const currentDay = currentDate.getDate();
+
     const monthHeader = document.getElementById("mood-calendar-month-header");
     if (monthHeader) {
       monthHeader.textContent = `${date
@@ -350,6 +382,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (dateToMood[day]) {
         const moodPoint = dateToMood[day];
         dayElement.classList.add(`mood-${moodPoint}`); // 添加對應心情指數的類名
+      }
+
+      // 如果是今天的日期，添加特殊樣式
+      if (isCurrentMonth && day === currentDay) {
+        dayElement.classList.add("today-mark");
       }
 
       calendarContainer.appendChild(dayElement);
@@ -554,6 +591,12 @@ function generateCalendar(year, month) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = date.getDay(); // 獲取該月的第一天是星期幾
 
+  // 獲取今天的日期
+  const currentDate = new Date();
+  const isCurrentMonth =
+    currentDate.getFullYear() === year && currentDate.getMonth() === month;
+  const currentDay = currentDate.getDate();
+
   const monthHeader = document.getElementById("calendar-month-header");
   monthHeader.textContent = `${date
     .toLocaleString("en-US", {
@@ -597,6 +640,19 @@ function generateCalendar(year, month) {
     if (dateToMood[day]) {
       const moodPoint = dateToMood[day];
       dayElement.classList.add(`mood-${moodPoint}`); // 添加對應心情指數的類名
+    }
+
+    // 如果是今天的日期，自動選中
+    if (isCurrentMonth && day === currentDay) {
+      dayElement.classList.add("selected-day");
+
+      // 格式化為YYYY-MM-DD格式
+      const selectedDay = String(day).padStart(2, "0");
+      const selectedMonth = String(month + 1).padStart(2, "0");
+      const formattedDate = `${year}-${selectedMonth}-${selectedDay}`;
+
+      // 更新日記列表，顯示今天的日記
+      updateDiaryList(formattedDate);
     }
 
     // 添加點擊事件
