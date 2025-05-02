@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的網頁</title>
+    <link rel="stylesheet" href="index.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Arimo:ital,wght@0,400..700;1,400..700&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="index.js"></script>
+    <script
+      src="https://kit.fontawesome.com/33eb571d20.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="main-container">
+      <spline-viewer
+        class="fish-3d"
+        url="https://prod.spline.design/6quY1NRCZJ0SA9RO/scene.splinecode"
+      ></spline-viewer>
+      <!-- ====================== main-page ========================== -->
+
+      <div class="main-page">
+        <div class="user-textbox">
+          <div class="date">4/1</div>
+          <div id="user-textbox-content">
+            <p>51121</p>
+          </div>
+        </div>
+
+        <div class="fish-textbox">
+          <div class="date">4/1</div>
+          <div id="fish-textbox-content">
+            <p>笑死</p>
+          </div>
+          <img src="/img/Vector 14.svg" alt="fishbox tail" />
+        </div>
+      </div>
+
+      <!-- ====================== calendar ========================== -->
+
+      <div class="calendar">
+        <div id="calendar-container">
+          <div id="calendar-month-header"></div>
+          <div id="calendar-grid">
+            <!-- 日曆會通過JavaScript動態生成 -->
+          </div>
+        </div>
+
+        <div class="diary-history">
+          <div id="diary-list">
+            <!-- 日記列表會通過JavaScript動態生成 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================== new-diary ========================== -->
+
+      <div class="diary-overlay"></div>
+      <div class="add-new-diary">
+        <h3>新增日記</h3>
+        <div class="add-new-diary-textarea">
+          <textarea placeholder="請輸入日記內容"></textarea>
+        </div>
+
+        <div class="mood-selector">
+          <h4>今天的心情</h4>
+          <div class="mood-points">
+            <div class="mood-point" data-point="1">
+              <i class="fa-regular fa-face-sad-tear"></i>
+              <span>1</span>
+            </div>
+            <div class="mood-point" data-point="2">
+              <i class="fa-regular fa-face-frown"></i>
+              <span>2</span>
+            </div>
+            <div class="mood-point" data-point="3">
+              <i class="fa-regular fa-face-meh"></i>
+              <span>3</span>
+            </div>
+            <div class="mood-point" data-point="4">
+              <i class="fa-regular fa-face-smile"></i>
+              <span>4</span>
+            </div>
+            <div class="mood-point" data-point="5">
+              <i class="fa-regular fa-face-grin-stars"></i>
+              <span>5</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="save-btn">保存</button>
+        </div>
+      </div>
+
+      <!-- ====================== emotion-point ========================== -->
+
+      <div class="emotion-point-dashboard">
+        <div class="mood-calendar">
+          <div id="mood-calendar-container">
+            <div id="mood-calendar-month-header"></div>
+            <div id="mood-calendar-grid">
+              <!-- 日曆會通過JavaScript動態生成 -->
+            </div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="mood-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="dashboard-content"></div>
+
+      <!-- ====================== personal-page ========================== -->
+
+      <div class="personal-page"></div>
+
+      <!-- ====================== navbar ========================== -->
+
+      <div class="navbar">
+        <div id="main-page-button">
+          <i class="fa-solid fa-house"></i>
+        </div>
+        <div id="calendar-button">
+          <i class="fa-regular fa-calendar"></i>
+        </div>
+        <div id="add-new-diary-button">
+          <i class="fa-solid fa-plus"></i>
+        </div>
+        <div id="emotion-point-dashboard-button">
+          <i class="fa-regular fa-face-smile"></i>
+        </div>
+        <div id="personal-page-button">
+          <i class="fa-solid fa-user"></i>
+        </div>
+      </div>
+    </div>
+
+    <script
+      type="module"
+      src="https://unpkg.com/@splinetool/viewer@1.9.89/build/spline-viewer.js"
+    ></script>
+  </body>
+</html>

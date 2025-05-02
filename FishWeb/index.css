@@ -1,0 +1,559 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;500;700;900&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Noto Sans TC", sans-serif;
+  height: 100%;
+}
+
+.main-container {
+  width: 390px;
+  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 頁面的基本樣式 */
+.main-page,
+.calendar,
+.emotion-point,
+.personal-page {
+  width: 100%;
+  min-height: calc(100vh - 60px); /* 減去導航欄的高度 */
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* ====================== main-page ========================== */
+
+.main-page {
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 20px;
+}
+
+.fish-3d {
+  position: absolute;
+  top: 0;
+  z-index: -1;
+}
+
+.user-textbox,
+.fish-textbox {
+  width: 293px;
+  height: 76px;
+  margin: 0 auto;
+
+  text-align: center;
+  line-height: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  border-radius: 20px;
+  margin-bottom: 30px;
+
+  font-weight: 700;
+}
+
+#user-textbox-content,
+#fish-textbox-content {
+  width: 293px;
+  height: 73px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #54a2b0;
+  border-radius: 20px;
+  font-size: 19px;
+}
+
+#fish-textbox-content {
+  background-color: #fead3c;
+  font-size: 19px;
+}
+
+.fish-textbox img {
+  position: absolute;
+  left: 40px;
+  bottom: -25px;
+}
+
+.date {
+  width: 293px;
+  height: 13px;
+  text-align: left;
+  margin-bottom: 5px;
+  font-size: 13px;
+  display: flex;
+  color: white;
+}
+
+/* ====================== calendar ========================== */
+
+.calendar {
+  display: none;
+  padding: 20px;
+}
+
+.calendar h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+#calendar-container {
+  width: 100%;
+  min-height: 300px;
+  background-color: white;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  font-family: "Archivo Black", sans-serif;
+}
+
+#calendar-month-header {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+#calendar-grid {
+  display: grid; /* 使用網格布局 */
+  grid-template-columns: repeat(7, 1fr); /* 每行 7 列 */
+  gap: 4px; /* 格子之間的間距 */
+  width: 100%;
+}
+
+.day-no-data {
+  cursor: default;
+}
+
+.day {
+  width: 100%; /* 讓格子寬度自動調整 */
+  height: 44px; /* 設定每個格子的高度 */
+  display: flex; /* 使用 flexbox 來置中內容 */
+  justify-content: center; /* 水平置中 */
+  align-items: center; /* 垂直置中 */
+  cursor: pointer; /* 鼠標懸停時顯示手型 */
+  transition: all 0.2s ease; /* 添加過渡效果 */
+}
+
+.day:hover {
+  background-color: #f0f0f0; /* 懸停時的背景色 */
+}
+
+.selected-day {
+  background-color: #4a90e2 !important; /* 使用!important確保覆蓋其他背景色 */
+  color: white !important;
+  border-radius: 50%;
+  font-weight: bold;
+  transform: scale(1.1); /* 稍微放大選中的日期 */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* 添加陰影效果 */
+}
+
+.diary-history {
+  width: 100%;
+  background-color: white;
+  border-radius: 10px;
+  padding: 15px;
+  font-weight: 500;
+}
+
+.diary-history h3 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+#diary-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.diary-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 10px;
+}
+
+.diary-date {
+  font-weight: bold;
+  color: #4a90e2;
+  margin-bottom: 5px;
+}
+
+.diary-content {
+  margin-bottom: 5px;
+}
+
+.diary-point {
+  color: #888;
+  font-size: 0.9em;
+}
+
+.export-btn {
+  display: block;
+  width: 120px;
+  height: 40px;
+  margin: 15px auto;
+  background-color: #bfe0e7;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  line-height: 40px;
+}
+
+/* ====================== new-diary ========================== */
+
+.add-new-diary {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 20px;
+  padding: 20px;
+  width: 350px;
+  height: 80vh;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 90; /* 確保日記窗口在遮罩上方 */
+}
+
+/* 添加遮罩背景 */
+.diary-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+  z-index: 80;
+}
+
+/* 當顯示日記時也顯示遮罩 */
+.diary-overlay.show {
+  display: block;
+}
+
+/* 当显示时改为flex */
+.add-new-diary.show {
+  display: flex;
+}
+
+/* 标题样式 */
+.add-new-diary h3 {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 0 10px;
+}
+
+.add-new-diary-textarea {
+  width: 100%;
+  height: 70%;
+  margin-bottom: 20px;
+}
+
+.add-new-diary textarea {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  border: 1px solid #beb6b6;
+  border-radius: 10px;
+  outline: none;
+  resize: none;
+  font-family: "Noto Sans TC", sans-serif;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: auto;
+  padding: 10px 0;
+}
+
+.save-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  height: 40px;
+  background-color: #bfe0e7;
+  border-radius: 20px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* 心情選擇器樣式 */
+.mood-selector {
+  width: 100%;
+  margin: 15px 0;
+}
+
+.mood-selector h4 {
+  margin-bottom: 10px;
+  text-align: center;
+  color: #333;
+}
+
+.mood-points {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+}
+
+.mood-point {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mood-point i {
+  font-size: 24px;
+  margin-bottom: 5px;
+  color: #888;
+  transition: color 0.3s ease;
+}
+
+.mood-point span {
+  font-size: 12px;
+  color: #888;
+  transition: color 0.3s ease;
+}
+
+.mood-point:hover i,
+.mood-point:hover span {
+  color: #4a90e2;
+}
+
+.mood-point.selected {
+  /* 移除選中的背景色 */
+  background-color: transparent;
+}
+
+/* 移除統一的選中顏色 */
+.mood-point.selected i,
+.mood-point.selected span {
+  /* color: #4a90e2; 移除原來的統一藍色 */
+  font-weight: bold;
+}
+
+/* 為不同的心情點數添加各自的顏色 */
+.mood-point[data-point="1"].selected i,
+.mood-point[data-point="1"].selected span {
+  color: #234d84; /* emo */
+}
+
+.mood-point[data-point="2"].selected i,
+.mood-point[data-point="2"].selected span {
+  color: #3ba3c5; /* 我很好 */
+}
+
+.mood-point[data-point="3"].selected i,
+.mood-point[data-point="3"].selected span {
+  color: #7fdd87; /* 一般 */
+}
+
+.mood-point[data-point="4"].selected i,
+.mood-point[data-point="4"].selected span {
+  color: #ffd166; /* 開心 */
+}
+
+.mood-point[data-point="5"].selected i,
+.mood-point[data-point="5"].selected span {
+  color: #ff862f; /* 非常開心 */
+}
+
+/* 心情指數對應的顏色 */
+.mood-1 {
+  background-color: #234d84; /* 非常不開心 */
+  border-radius: 50%;
+}
+
+.mood-2 {
+  background-color: #3ba3c5; /* 不太開心 */
+  border-radius: 50%;
+}
+
+.mood-3 {
+  background-color: #7fdd87; /* 一般 */
+  border-radius: 50%;
+}
+
+.mood-4 {
+  background-color: #ffd166; /* 開心 */
+  border-radius: 50%;
+}
+
+.mood-5 {
+  background-color: #ff862f; /* 非常開心 */
+  border-radius: 50%;
+}
+
+/* ====================== emotion-point ========================== */
+
+.emotion-point-dashboard {
+  display: none;
+  padding: 20px;
+}
+
+.mood-calendar {
+  margin-bottom: 20px;
+}
+
+#mood-calendar-container {
+  width: 100%;
+  min-height: 200px;
+  background-color: white;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  font-family: "Archivo Black", sans-serif;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#mood-calendar-month-header {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+#mood-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+.emotion-point-dashboard h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.chart-container {
+  width: 100%;
+  height: 250px;
+  margin-bottom: 20px;
+  background-color: white;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#mood-chart {
+  width: 100%;
+  height: 100%;
+}
+
+/* ====================== personal-page ========================== */
+
+.personal-page {
+  display: none;
+}
+
+/* ====================== navbar ========================== */
+
+.navbar {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  justify-content: center;
+  align-items: center;
+  width: 390px;
+  height: 80px;
+  background-color: rgb(255, 255, 255);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  z-index: 100; /* 確保導航欄在日記窗口上方 */
+}
+
+#main-page-button,
+#add-new-diary-button,
+#calendar-button,
+#emotion-point-dashboard-button,
+#personal-page-button {
+  width: 50px;
+  height: 50px;
+  margin: 0px 10px;
+  background-color: rgb(255, 255, 255);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#add-new-diary-button {
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.25);
+}
+
+.navbar div i {
+  color: #000; /* 預設圖示顏色 */
+  transition: all 0.3s ease;
+}
+
+.navbar div.active i {
+  color: #4a90e2; /* 活躍狀態的圖示顏色 */
+  transform: scale(1.5);
+}
+
+@media screen and (max-width: 768px) {
+  body {
+    padding: 0px;
+  }
+
+  .textbox {
+    font-size: 16px; /* 確保手機上文字大小合適 */
+  }
+}
+
+.diary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.reset-filter-btn {
+  background-color: #bfe0e7;
+  border: none;
+  border-radius: 15px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-filter-btn:hover {
+  background-color: #4a90e2;
+  color: white;
+}
