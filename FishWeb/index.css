@@ -227,7 +227,7 @@ body {
   width: 350px;
   height: 80vh;
   background-color: white;
-  border-radius: 20px;
+  border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   z-index: 90; /* 確保日記窗口在遮罩上方 */
 }
@@ -564,4 +564,59 @@ body {
   box-shadow: 0 0 4px rgba(74, 144, 226, 0.5);
   border-radius: 50%;
   transform: scale(1.05);
+}
+
+/* 日期選擇器樣式 */
+.date-selector {
+  width: 100%;
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.date-selector label {
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #555;
+}
+
+.date-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #beb6b6;
+  border-radius: 8px;
+  font-family: "Noto Sans TC", sans-serif;
+  outline: none;
+}
+
+/* 日記操作按鈕 */
+.diary-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.edit-diary-btn,
+.add-diary-btn {
+  background-color: #bfe0e7;
+  border: none;
+  border-radius: 15px;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #333;
+  font-family: "Noto Sans TC", sans-serif;
+}
+
+.edit-diary-btn:hover,
+.add-diary-btn:hover {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.add-diary-btn {
+  display: block;
+  margin: 15px auto;
 }

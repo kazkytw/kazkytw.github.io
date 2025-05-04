@@ -39,12 +39,25 @@ function updateDiaryList(selectedDate = null) {
 
   // 如果該日期沒有日記
   if (filteredDiaries.length === 0) {
-    diaryList.innerHTML = `<p class="no-diary">該日期暫無日記記錄</p>`;
+    diaryList.innerHTML = `<p class="no-diary">該日期暫無日記記錄</p>
+                          <button class="add-diary-btn" data-date="${selectedDate}">新增日記</button>`;
+
+    // 添加點擊事件用於該日期添加日記
+    const addDiaryBtn = diaryList.querySelector(".add-diary-btn");
+    if (addDiaryBtn) {
+      addDiaryBtn.addEventListener("click", function () {
+        const date = this.getAttribute("data-date");
+        openDiaryEditor(date, false); // 明確設置為非編輯模式
+      });
+    }
+
     return;
   }
 
-  // 按日期排序（最新的在前面）
-  filteredDiaries.sort((a, b) => new Date(b.date) - new Date(a.date));
+  // 添加編輯按鈕
+  diaryList.innerHTML = `<div class="diary-actions">
+                          <button class="edit-diary-btn" data-date="${selectedDate}">編輯日記</button>
+                        </div>`;
 
   // 添加每條日記到列表
   filteredDiaries.forEach((diary) => {
@@ -58,6 +71,74 @@ function updateDiaryList(selectedDate = null) {
 
     diaryList.appendChild(diaryItem);
   });
+
+  // 添加編輯按鈕點擊事件
+  const editDiaryBtn = diaryList.querySelector(".edit-diary-btn");
+  if (editDiaryBtn) {
+    editDiaryBtn.addEventListener("click", function () {
+      const date = this.getAttribute("data-date");
+      openDiaryEditor(date, true); // 明確設置為編輯模式
+    });
+  }
+}
+
+// 打開日記編輯器
+function openDiaryEditor(date, editMode = true) {
+  // 顯示日記輸入框
+  const addNewDiary = document.querySelector(".add-new-diary");
+  const diaryOverlay = document.querySelector(".diary-overlay");
+
+  if (addNewDiary && diaryOverlay) {
+    addNewDiary.classList.add("show");
+    diaryOverlay.classList.add("show");
+
+    // 設置日期
+    const dateInput = document.getElementById("diary-date");
+    if (dateInput) {
+      dateInput.value = date;
+    }
+
+    // 獲取文本區
+    const textarea = document.querySelector(".add-new-diary textarea");
+    // 獲取心情點數
+    const moodPoints = document.querySelectorAll(".mood-point");
+
+    // 默認選中中間的心情
+    if (moodPoints.length > 0) {
+      moodPoints.forEach((p) => p.classList.remove("selected"));
+      moodPoints[2].classList.add("selected");
+      selectedMoodPoint = 3;
+    }
+
+    // 清空文本區
+    if (textarea) {
+      textarea.value = "";
+    }
+
+    // 獲取日記數據
+    const diaries = loadDiariesFromLocalStorage();
+    const diary = diaries.find((d) => d.date === date);
+
+    // 如果有該日期的日記且是編輯模式，則填充內容
+    if (diary && editMode) {
+      // 填充文本內容
+      if (textarea) {
+        textarea.value = diary.content;
+      }
+
+      // 選中對應的心情
+      if (moodPoints.length > 0) {
+        moodPoints.forEach((point) => {
+          point.classList.remove("selected");
+          const pointValue = parseInt(point.getAttribute("data-point"));
+          if (pointValue === diary.point) {
+            point.classList.add("selected");
+            selectedMoodPoint = pointValue;
+          }
+        });
+      }
+    }
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -166,8 +247,16 @@ document.addEventListener("DOMContentLoaded", function () {
   // 新增日記按鈕顯示日曆並打開日記輸入框
   addNewDiaryBtn.addEventListener("click", () => {
     showPage(calendar);
-    addNewDiary.classList.add("show");
-    diaryOverlay.classList.add("show");
+
+    // 獲取當前日期
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const formattedDate = `${year}-${month}-${day}`;
+
+    // 打開日記編輯器，不是編輯模式
+    openDiaryEditor(formattedDate, false);
   });
 
   emotionPointDashboardBtn.addEventListener("click", () => {
@@ -185,17 +274,24 @@ document.addEventListener("DOMContentLoaded", function () {
   if (saveBtn) {
     saveBtn.addEventListener("click", () => {
       const textarea = document.querySelector(".add-new-diary textarea");
-      if (textarea && textarea.value.trim() !== "") {
-        // 獲取當前日期
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, "0");
-        const day = String(today.getDate()).padStart(2, "0");
-        const formattedDate = `${year}-${month}-${day}`;
+      const dateInput = document.getElementById("diary-date");
 
-        // 創建新日記對象，使用用戶選擇的心情指數
+      if (textarea && textarea.value.trim() !== "") {
+        if (!dateInput.value) {
+          alert("請選擇日期");
+          return;
+        }
+
+        // 獲取選擇的日期
+        const selectedDate = dateInput.value; // 格式已經是YYYY-MM-DD
+        const dateParts = selectedDate.split("-");
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]) - 1; // JavaScript月份從0開始
+        const day = parseInt(dateParts[2]);
+
+        // 創建新日記對象，使用用戶選擇的心情指數和日期
         const newDiary = {
-          date: formattedDate,
+          date: selectedDate,
           content: textarea.value.trim(),
           point: selectedMoodPoint,
         };
@@ -207,20 +303,20 @@ document.addEventListener("DOMContentLoaded", function () {
           addNewDiary.classList.remove("show");
           diaryOverlay.classList.remove("show");
 
-          // 更新日記列表
-          updateDiaryList();
+          // 更新日記列表，顯示選中日期的日記
+          updateDiaryList(selectedDate);
 
           // 重置心情選擇為默認值
           moodPoints.forEach((p) => p.classList.remove("selected"));
           moodPoints[2].classList.add("selected");
           selectedMoodPoint = 3;
 
-          // 更新日曆顯示 - 重新生成當前月份的日曆
-          generateCalendar(today.getFullYear(), today.getMonth());
+          // 更新日曆顯示 - 重新生成當前顯示的月份的日曆
+          generateCalendar(year, month, selectedDate);
 
           // 如果情感儀表板可見，也更新情感日曆
           if (emotionPointDashboard.style.display === "block") {
-            generateMoodCalendar(today.getFullYear(), today.getMonth());
+            generateMoodCalendar(year, month);
             drawMoodChart();
           }
         } else {
@@ -253,8 +349,18 @@ document.addEventListener("DOMContentLoaded", function () {
       let diaries = localStorage.getItem("diaries");
       diaries = diaries ? JSON.parse(diaries) : [];
 
-      // 添加新日記
-      diaries.push(diaryData);
+      // 檢查是否是更新已有日記
+      const existingDiaryIndex = diaries.findIndex(
+        (diary) => diary.date === diaryData.date
+      );
+
+      if (existingDiaryIndex !== -1) {
+        // 更新現有日記
+        diaries[existingDiaryIndex] = diaryData;
+      } else {
+        // 添加新日記
+        diaries.push(diaryData);
+      }
 
       // 保存回localStorage
       localStorage.setItem("diaries", JSON.stringify(diaries));
@@ -583,7 +689,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // 為日曆頁面生成日曆
-function generateCalendar(year, month) {
+function generateCalendar(year, month, selectDate = null) {
   const calendarContainer = document.getElementById("calendar-grid");
   calendarContainer.innerHTML = ""; // 清空容器
 
@@ -596,6 +702,18 @@ function generateCalendar(year, month) {
   const isCurrentMonth =
     currentDate.getFullYear() === year && currentDate.getMonth() === month;
   const currentDay = currentDate.getDate();
+
+  // 如果有指定要選中的日期，則解析該日期
+  let selectedDay = null;
+  if (selectDate) {
+    const dateParts = selectDate.split("-");
+    const selectYear = parseInt(dateParts[0]);
+    const selectMonth = parseInt(dateParts[1]) - 1;
+    // 只有當選中的年月與當前顯示的年月相符時，才標記為選中
+    if (selectYear === year && selectMonth === month) {
+      selectedDay = parseInt(dateParts[2]);
+    }
+  }
 
   const monthHeader = document.getElementById("calendar-month-header");
   monthHeader.textContent = `${date
@@ -642,16 +760,24 @@ function generateCalendar(year, month) {
       dayElement.classList.add(`mood-${moodPoint}`); // 添加對應心情指數的類名
     }
 
-    // 如果是今天的日期，自動選中
+    // 如果是今天的日期，添加今天標記
     if (isCurrentMonth && day === currentDay) {
+      dayElement.classList.add("today-mark");
+    }
+
+    // 如果是指定要選中的日期，或者沒有指定但是今天，則選中
+    if (
+      (selectedDay && day === selectedDay) ||
+      (!selectedDay && isCurrentMonth && day === currentDay)
+    ) {
       dayElement.classList.add("selected-day");
 
       // 格式化為YYYY-MM-DD格式
-      const selectedDay = String(day).padStart(2, "0");
-      const selectedMonth = String(month + 1).padStart(2, "0");
-      const formattedDate = `${year}-${selectedMonth}-${selectedDay}`;
+      const formattedDay = String(day).padStart(2, "0");
+      const formattedMonth = String(month + 1).padStart(2, "0");
+      const formattedDate = `${year}-${formattedMonth}-${formattedDay}`;
 
-      // 更新日記列表，顯示今天的日記
+      // 更新日記列表
       updateDiaryList(formattedDate);
     }
 
