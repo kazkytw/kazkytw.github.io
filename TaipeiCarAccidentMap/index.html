@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>臺北車禍熱力圖 + 行政區界線（單月篩選＋整年折線＋分類圓餅）</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.2/dist/proj4.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    html, body { margin:0; height:100%; font-family: system-ui, "Noto Sans TC", sans-serif; }
+    #map { position: absolute; inset: 0; }
+    #sidePanel {
+      position: absolute; top: 0; right: 0; height: 100%; width: 340px;
+      background: #fff; box-shadow: -8px 0 24px rgba(0,0,0,.12);
+      transform: translateX(100%); transition: transform .25s ease;
+      z-index: 2; display: flex; flex-direction: column;
+    }
+    #sidePanel.open { transform: translateX(0); }
+    .sp-header { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; }
+    .sp-header-top { display:flex; justify-content:space-between; align-items:center; }
+    .sp-title { font-weight: 700; font-size: 14px; color:#111827; }
+    .sp-close { border:0; background:#f3f4f6; width:28px; height:28px; border-radius:8px; cursor:pointer; font-weight:700; color:#374151; }
+    #monthSelect { margin-top:6px; width:100%; padding:5px 8px; border:1px solid #ccc; border-radius:6px; font-size:13px; }
+    .sp-body { padding: 10px 14px 80px; overflow:auto; }
+    .sp-stat { display:flex; gap:8px; margin: 8px 0 12px; }
+    .sp-card { flex:1; background:#f9fafb; border:1px solid #f1f5f9; border-radius:10px; padding:10px; text-align:center; }
+    .sp-card .kpi { font-size:18px; font-weight:800; color:#111827; }
+    .sp-card .lbl { font-size:12px; color:#6b7280; }
+    .chartBox { width: 100%; display:flex; justify-content:center; }
+    .chartTitle { margin:6px 0 2px; font-size:12px; color:#6b7280; text-align:center; }
+    .legend {
+      position:absolute; z-index:1; bottom:16px; left:16px;
+      background:#fff; padding:10px 12px; border-radius:8px; font:12px/1.4 system-ui;
+      box-shadow:0 6px 20px rgba(0,0,0,.12);
+    }
+    .legend .bar { height:8px; width:180px; background:linear-gradient(90deg,#abd9e9,#ffffbf,#fee08b,#fdae61,#f46d43,#d73027); border-radius:4px; margin:6px 0 2px; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<!-- 右側滑出統計面板 -->
+<div id="sidePanel">
+  <div class="sp-header">
+    <div class="sp-header-top">
+      <div class="sp-title" id="spTitle">選擇一個行政區</div>
+      <button class="sp-close" id="spClose" title="關閉">×</button>
+    </div>
+    <select id="monthSelect">
+      <option value="all">全部月份</option>
+      <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+      <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
+      <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+      <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+    </select>
+  </div>
+  <div class="sp-body">
+    <div class="sp-stat">
+      <div class="sp-card"><div class="kpi" id="kpiTotal">0</div><div class="lbl">事故總數</div></div>
+      <div class="sp-card"><div class="kpi" id="kpiA1">0</div><div class="lbl">A1 嚴重</div></div>
+      <div class="sp-card"><div class="kpi" id="kpiA2">0</div><div class="lbl">A2 一般</div></div>
+    </div>
+
+    <div class="chartTitle">單月事故種類</div>
+    <div class="chartBox"><canvas id="chartBar" width="280" height="180"></canvas></div>
+
+    <div class="chartTitle" style="margin-top:10px;">全年事故趨勢（總數）</div>
+    <div class="chartBox"><canvas id="chartLine" width="280" height="160"></canvas></div>
+
+    <div class="chartTitle" style="margin-top:10px;">單月當事者/車種分類</div>
+    <div class="chartBox"><canvas id="chartPie" width="280" height="220"></canvas></div>
+  </div>
+</div>
+
+<div class="legend">
+  <b>事故熱度</b>
+  <div class="bar"></div>
+  <div>低 ← 熱度 → 高</div>
+</div>
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiYmlhYm9ibyIsImEiOiJjamVvejdlNXQxZnBuMndtdWhiZHRuaTNpIn0.PIS9wtUxm_rz_IzF2WFD1g';
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/light-v11',
+  center: [121.55, 25.06],
+  zoom: 10.8
+});
+
+// ====== 車禍資料（可多檔） ======
+const sources = [
+  './臺北市國道統計車禍數量.json',
+  './臺北市航空警察統計車禍數量.json',
+  './臺北市市政府統計車禍傷亡.json'
+];
+
+function weightByType(type){
+  if(type==='A1')return 1.0;
+  if(type==='A2')return 0.6;
+  return 0.4;
+}
+
+// 取「當事者區分-類別-大類別名稱-車種」欄位（多名容錯）
+function partyCatFrom(row){
+  return row['當事者區分-類別-大類別名稱-車種']
+      || row['當事者區分-類別-大類別名稱']
+      || row['當事者車種']
+      || row['肇事車種']
+      || row['車種名稱']
+      || row['車種']
+      || '';
+}
+
+// 將「發生月份」寫入 properties.month（數字 1~12），並加入 partyCat
+function toGeoJSON(arr){
+  const feats=[];
+  for(const row of arr){
+    const lng=parseFloat(row['經度']);
+    const lat=parseFloat(row['緯度']);
+    if(Number.isFinite(lng)&&Number.isFinite(lat)){
+      feats.push({
+        type:'Feature',
+        geometry:{type:'Point',coordinates:[lng,lat]},
+        properties:{
+          year: row['發生年度'],
+          month: Number(row['發生月份']),
+          date: row['發生日期'] || row['發生日'] || row['日期'] || '',
+          time: row['發生時間'],
+          kind: row['事故類別名稱'],
+          bureau: row['處理單位名稱警局層'],
+          place: row['發生地點'],
+          weather: row['天候名稱'],
+          light: row['光線名稱'],
+          partyCat: partyCatFrom(row),   // 👈 新增：當事者/車種分類
+          injured: row['死亡受傷人數'],
+          weight: weightByType(row['事故類別名稱'])
+        }
+      });
+    }
+  }
+  return {type:'FeatureCollection',features:feats};
+}
+
+async function loadAccidents(){
+  const all=[];
+  for(const url of sources){
+    try{
+      const res=await fetch(url);
+      if(!res.ok)continue;
+      const json=await res.json();
+      all.push(...toGeoJSON(json).features);
+    }catch(e){console.warn('載入失敗：',url,e);}
+  }
+  return {type:'FeatureCollection',features:all};
+}
+
+// ====== 行政區（G97_A_CADIST_P.json，3826→WGS84） ======
+proj4.defs('EPSG:3826','+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +units=m +no_defs');
+function convertCoords(coords,type){
+  if(type==='Point')return proj4('EPSG:3826','WGS84',coords);
+  if(type==='Polygon'||type==='MultiLineString') return coords.map(r=>r.map(pt=>proj4('EPSG:3826','WGS84',pt)));
+  if(type==='MultiPolygon') return coords.map(p=>p.map(r=>r.map(pt=>proj4('EPSG:3826','WGS84',pt))));
+  return coords;
+}
+async function loadDistricts(){
+  const r=await fetch('./G97_A_CADIST_P.json');
+  const raw=await r.json();
+  const fc=raw.type==='FeatureCollection'?raw:{type:'FeatureCollection',features:raw.features||[]};
+  return {
+    type:'FeatureCollection',
+    features:fc.features.map(f=>({
+      type:'Feature',
+      properties:f.properties,
+      geometry:{type:f.geometry.type,coordinates:convertCoords(f.geometry.coordinates,f.geometry.type)}
+    }))
+  };
+}
+
+// ====== 右側面板控制 ======
+const sidePanel=document.getElementById('sidePanel');
+const spTitle=document.getElementById('spTitle');
+const spClose=document.getElementById('spClose');
+const kpiTotal=document.getElementById('kpiTotal');
+const kpiA1=document.getElementById('kpiA1');
+const kpiA2=document.getElementById('kpiA2');
+const monthSelect=document.getElementById('monthSelect');
+const chartBarCanvas=document.getElementById('chartBar');
+const chartLineCanvas=document.getElementById('chartLine');
+const chartPieCanvas=document.getElementById('chartPie');
+
+let chartBar=null, chartLine=null, chartPie=null;
+let currentDistrict=null;
+let accidentsFC=null;
+
+function openPanel(){sidePanel.classList.add('open');}
+function closePanel(){sidePanel.classList.remove('open');}
+spClose.addEventListener('click',closePanel);
+
+// 單月柱狀圖
+function renderBar(stats){
+  if(chartBar) chartBar.destroy();
+  chartBar=new Chart(chartBarCanvas.getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:['A1 嚴重','A2 一般','其他'],
+      datasets:[{label:'事故數量',data:[stats.A1,stats.A2,stats.other],backgroundColor:['#d73027','#fdae61','#2c7bb6']}]
+    },
+    options:{responsive:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+}
+
+// 全年折線圖（每月總數）
+function renderLine(monthlyCounts){
+  if(chartLine) chartLine.destroy();
+  chartLine=new Chart(chartLineCanvas.getContext('2d'),{
+    type:'line',
+    data:{
+      labels:['1','2','3','4','5','6','7','8','9','10','11','12'].map(m=>m+'月'),
+      datasets:[{label:'月事故總數',data:monthlyCounts,fill:false,tension:0.25,pointRadius:3}]
+    },
+    options:{responsive:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+}
+
+// 單月分類圓餅（當事者/車種）
+function renderPie(labelCounts){
+  if(chartPie) chartPie.destroy();
+  const labels = labelCounts.map(d=>d.label);
+  const data = labelCounts.map(d=>d.count);
+  const colors = [
+    '#4c78a8','#f58518','#54a24b','#e45756','#72b7b2','#ff9da6',
+    '#9c755f','#b279a2','#8cd17d','#eeca3b','#b1c5fd','#c4a7e7'
+  ];
+  chartPie=new Chart(chartPieCanvas.getContext('2d'),{
+    type:'pie',
+    data:{ labels, datasets:[{ data, backgroundColor: labels.map((_,i)=>colors[i%colors.length]) }] },
+    options:{
+      responsive:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ boxWidth:10, font:{ size:11 } } },
+        tooltip:{ callbacks:{ label:(ctx)=>`${ctx.label}: ${ctx.raw} 件 (${(ctx.raw / data.reduce((a,b)=>a+b,0) * 100).toFixed(1)}%)` } }
+      }
+    }
+  });
+}
+
+// 更新當前行政區統計
+function updateDistrictStats(feature){
+  if(!feature||!accidentsFC)return;
+  const name=feature.properties?.TNAME||'（未命名）';
+  const selected=monthSelect.value;
+
+  // 該區域內事故點
+  const ptsIn=turf.pointsWithinPolygon(accidentsFC,feature);
+
+  // 全年每月總數
+  const monthly=new Array(12).fill(0);
+  for(const pt of ptsIn.features){
+    const m=Number(pt.properties?.month);
+    if(m>=1 && m<=12) monthly[m-1]+=1;
+  }
+
+  // 依選定月份取子集合
+  const filtered=ptsIn.features.filter(pt=>{
+    if(selected==='all') return true;
+    return Number(pt.properties?.month) === Number(selected);
+  });
+
+  // 單月 A1/A2/其他
+  const stats={A1:0,A2:0,other:0};
+  for(const pt of filtered){
+    const k=pt.properties?.kind;
+    if(k==='A1')stats.A1++; else if(k==='A2')stats.A2++; else stats.other++;
+  }
+
+  // 單月 分類圓餅：以 partyCat 聚合，取 Top6 其餘歸「其他」
+  const mapCounts = new Map();
+  for(const pt of filtered){
+    const key = (pt.properties?.partyCat || '未標示').toString().trim();
+    mapCounts.set(key, (mapCounts.get(key)||0)+1);
+  }
+  const sorted = Array.from(mapCounts.entries())
+    .map(([label,count])=>({label,count}))
+    .sort((a,b)=>b.count-a.count);
+  const topN = 6;
+  const top = sorted.slice(0, topN);
+  const rest = sorted.slice(topN).reduce((s,cur)=>s+cur.count,0);
+  if(rest>0) top.push({label:'其他', count:rest});
+
+  // 更新 UI 與圖表
+  spTitle.textContent = `${name}（${selected==='all'?'全年':selected+'月'}）`;
+  kpiTotal.textContent = filtered.length;
+  kpiA1.textContent = stats.A1;
+  kpiA2.textContent = stats.A2;
+
+  renderBar(stats);
+  renderLine(monthly);
+  renderPie(top);
+  openPanel();
+}
+
+monthSelect.addEventListener('change',()=>{ if(currentDistrict) updateDistrictStats(currentDistrict); });
+
+map.on('load',async()=>{
+  // 事故
+  accidentsFC=await loadAccidents();
+  // === 依 ~100m 網格計算密度，避免一大片紅 ===
+  (function enrichDensity(fc) {
+    const PREC = 3; // 小數第3位 ≈ 110m；想更精細可改 4（≈11m）
+    const counts = new Map();
+
+    // 累計每個網格的「加權」數量（沿用 A1/A2 權重）
+    for (const f of fc.features) {
+      const [lng, lat] = f.geometry.coordinates;
+      const key = `${lng.toFixed(PREC)},${lat.toFixed(PREC)}`;
+      const w = Number(f.properties?.weight ?? 0.6);
+      counts.set(key, (counts.get(key) || 0) + w);
+    }
+
+    // 正規化成 0~1 的 density，讓不同資料量也有對比
+    let max = 0;
+    for (const v of counts.values()) max = Math.max(max, v);
+
+    for (const f of fc.features) {
+      const [lng, lat] = f.geometry.coordinates;
+      const key = `${lng.toFixed(PREC)},${lat.toFixed(PREC)}`;
+      const sum = counts.get(key) || 0;
+      const norm = max > 0 ? Math.sqrt(sum / max) : 0; // 平滑：高密度更凸顯
+      f.properties.gridCount = sum;   // 該網格加權筆數（可用於除錯）
+      f.properties.density   = norm;  // 0~1
+    }
+  })(accidentsFC);
+  map.addSource('accidents',{type:'geojson',data:accidentsFC});
+  map.addLayer({
+    id: 'accidents-heat',
+    type: 'heatmap',
+    source: 'accidents',
+    maxzoom: 14,
+    paint: {
+      // 用密度做主權重，事故等級再微調（A1 > A2 > 其他）
+      'heatmap-weight': [
+        '*',
+        ['coalesce', ['get', 'density'], 0],           // 0~1（上面算好的）
+        ['interpolate', ['linear'], ['coalesce', ['get', 'weight'], 0.6],
+          0.4, 0.9,   // 其他
+          0.6, 1.0,   // A2
+          1.0, 1.2    // A1
+        ]
+      ],
+      // 半徑/強度收斂，避免大片融合
+      'heatmap-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        8, 6,
+        11, 10,
+        14, 14
+      ],
+      'heatmap-intensity': [
+        'interpolate', ['linear'], ['zoom'],
+        8, 0.8,
+        12, 0.8,
+        14, 1.1
+      ],
+      // 提高變紅門檻：只有高密度才會到紅
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0.00, 'rgba(0,0,0,0)',
+        0.10, '#abd9e9',
+        0.25, '#ffffbf',
+        0.45, '#fee08b',
+        0.65, '#fdae61',
+        0.82, '#f46d43',
+        0.93, '#d73027'
+      ],
+      // 放大時讓點圖層接手
+      'heatmap-opacity': [
+        'interpolate', ['linear'], ['zoom'],
+        10, 0.85,
+        13.5, 0.60,
+        17, 0
+      ]
+    }
+  });
+  map.addLayer({
+    id:'accidents-point',type:'circle',source:'accidents',minzoom:13,
+    paint:{
+      'circle-radius':['interpolate',['linear'],['zoom'],13,['*',1.8,['get','weight']],16,['*',6,['get','weight']]],
+      'circle-color':['case',['==',['get','kind'],'A1'],'#d73027',['==',['get','kind'],'A2'],'#fdae61','#2c7bb6'],
+      'circle-stroke-color':'#fff','circle-stroke-width':1,'circle-opacity':0.9
+    }
+  });
+
+  // 行政區
+  const districts=await loadDistricts();
+  map.addSource('taipei-districts',{type:'geojson',data:districts});
+  map.addLayer({id:'district-fill',type:'fill',source:'taipei-districts',paint:{'fill-color':'#9ab0ff','fill-opacity':0.06}},'accidents-point');
+  map.addLayer({id:'district-borders',type:'line',source:'taipei-districts',
+    paint:{'line-color':'#2b3a67','line-width':['interpolate',['linear'],['zoom'],10,1,12,1.8,14,2.5],'line-opacity':0.95}},'accidents-point');
+  map.addLayer({id:'district-labels',type:'symbol',source:'taipei-districts',
+    layout:{'text-field':['coalesce',['get','TNAME'],'（未命名）'],'text-size':['interpolate',['linear'],['zoom'],10,10,14,14],'text-anchor':'center','text-allow-overlap':false},
+    paint:{'text-color':'#24324b','text-halo-color':'rgba(255,255,255,0.9)','text-halo-width':1.2}},'accidents-point');
+
+  // 點擊行政區 → 右側面板
+  map.on('click','district-fill',e=>{
+    const f=e.features&&e.features[0];
+    if(!f)return;
+    currentDistrict=f;
+    updateDistrictStats(f);
+  });
+});
+</script>
+</body>
+</html>
