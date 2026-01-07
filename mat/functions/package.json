@@ -1,9 +1,0 @@
-{
-  "name": "smartmat-functions",
-  "private": true,
-  "engines": { "node": "18" },
-  "dependencies": {
-    "firebase-admin": "^12.1.0",
-    "firebase-functions": "^5.1.0"
-  }
-}
